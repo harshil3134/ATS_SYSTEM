@@ -3,7 +3,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const getResponseForGivenPrompt = async (jobDescription,resumeText ) => {
   const API_KEY = import.meta.env.VITE_API_KEY;
-  console.log("API Key:", API_KEY);
 
 
   
@@ -137,12 +136,12 @@ const generateContentConfig = {
     const response = await result.response;
     const text = response.text(); // Correctly extracting text
 
-    console.log("Generated Response:", text);
+    // console.log("Generated Response:", text);
   let jsonResponse;
     try {
         // Parse the JSON string into a JavaScript object
         jsonResponse = JSON.parse(text);
-        console.log("Parsed JSON Response:", jsonResponse);
+        //console.log("Parsed JSON Response:", jsonResponse);
         return jsonResponse; // Return the parsed JSON object
       } catch (jsonError) {
         console.error("Error parsing JSON response:", jsonError);
