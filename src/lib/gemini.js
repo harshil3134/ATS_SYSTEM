@@ -1,11 +1,20 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// Create the API client once when the module is loaded
+// This keeps the API key in memory only during initialization
+const API_KEY = import.meta.env.VITE_API_KEY;
+const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-const getResponseForGivenPrompt = async (jobDescription,resumeText ) => {
-  const API_KEY = import.meta.env.VITE_API_KEY;
-
-
+const getResponseForGivenPrompt = async (jobDescription, resumeText) => {
+  console.log("temporary project is disabled by devloper");
   
+  return;
+  if (!API_KEY) {
+    console.error("API Key is missing. Check your .env file.");
+    return { error: "API key is not configured" };
+  }
+
   const prompt = `  
   You are an expert in ATS resume screening. Given the job description and a candidate's resume, analyze the match score based on key skills, experience, and keywords.
   Only include keywords that are essential to the role.
@@ -24,11 +33,8 @@ const getResponseForGivenPrompt = async (jobDescription,resumeText ) => {
       "count": 8,
       "message": "Your resume includes 8 key terms from the job description, which is positive for ATS scanning."
     },
-    "keywords":
-    //It should return keywords as per count given above.
-[]
+    "keywords": [],
     "strengths": [
-    //It should return skills like this small words examples
       "React.js",
       "Type Scipt",
       "Node.js",
@@ -53,9 +59,8 @@ ${resumeText}
 
 Generate a structured response with proper formatting.
 `;
-  
 
-const generateContentConfig = {
+  const generateContentConfig = {
     temperature: 1,
     topP: 0.95,
     topK: 40,
@@ -69,87 +74,55 @@ const generateContentConfig = {
           type: "OBJECT",
           required: ["percentage", "message"],
           properties: {
-            percentage: {
-              type: "STRING",
-            },
-            message: {
-              type: "STRING",
-            },
-          },
+            percentage: { type: "STRING" },
+            message: { type: "STRING" }
+          }
         },
         missing_skills: {
           type: "ARRAY",
-          items: {
-            type: "STRING",
-          },
+          items: { type: "STRING" }
         },
         keyword_matches: {
           type: "OBJECT",
           required: ["count", "message"],
           properties: {
-            count: {
-              type: "INTEGER",
-            },
-            message: {
-              type: "STRING",
-            },
-          },
+            count: { type: "INTEGER" },
+            message: { type: "STRING" }
+          }
         },
         keywords: {
           type: "ARRAY",
-          items: {
-            type: "STRING",
-          },
-        },
-      },
-    },
+          items: { type: "STRING" }
+        }
+      }
+    }
   };
-  
-  if (!API_KEY) {
-    console.error("API Key is missing. Check your .env file.");
-    return;
-  }
-
-  if (!prompt || typeof prompt !== "string") {
-    console.error("Invalid prompt! Ensure you're passing a valid string.");
-    return;
-  }
 
   try {
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    // ✅ Correct request format
+    // Make the API request
     const result = await model.generateContent({
       contents: [
         {
           role: "user",
-          parts: [
-            { text: prompt }, // Make sure text is included correctly
-          ],
-        },
+          parts: [{ text: prompt }]
+        }
       ],
-      generationConfig: generateContentConfig,
+      generationConfig: generateContentConfig
     });
 
-    // ✅ Ensure proper handling of response
     const response = await result.response;
-    const text = response.text(); // Correctly extracting text
+    const text = response.text();
 
-    // console.log("Generated Response:", text);
-  let jsonResponse;
     try {
-        // Parse the JSON string into a JavaScript object
-        jsonResponse = JSON.parse(text);
-        //console.log("Parsed JSON Response:", jsonResponse);
-        return jsonResponse; // Return the parsed JSON object
-      } catch (jsonError) {
-        console.error("Error parsing JSON response:", jsonError);
-        return { error: "Failed to parse JSON response", rawText: text }; // Return an error object and the raw text
-      }
-    return text;
+      const jsonResponse = JSON.parse(text);
+      return jsonResponse;
+    } catch (jsonError) {
+      console.error("Error parsing JSON response:", jsonError);
+      return { error: "Failed to parse JSON response", rawText: text };
+    }
   } catch (error) {
-    console.error("Something went wrong:", error);
+    console.error("API request failed:", error);
+    return { error: "API request failed", details: error.message };
   }
 };
 
