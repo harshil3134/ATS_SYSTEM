@@ -7,9 +7,7 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 const getResponseForGivenPrompt = async (jobDescription, resumeText) => {
-  console.log("temporary project is disabled by devloper");
-  
-  return;
+
   if (!API_KEY) {
     console.error("API Key is missing. Check your .env file.");
     return { error: "API key is not configured" };
